@@ -37,11 +37,15 @@ export class MainScene extends Phaser.Scene {
         this.load.image(AssetType.Starfield, "/images/starfield.png");
         this.load.image(AssetType.Bullet, "/images/bullet.png");
         this.load.image(AssetType.EnemyBullet, "/images/enemy-bullet.png");
+        this.load.image(AssetType.Lives, "/images/lives.png");
         this.load.spritesheet(AssetType.Alien, "/images/invader.png", {
             frameWidth: 32,
             frameHeight: 32,
         });
-        this.load.image(AssetType.Ship, "/images/player.png");
+        this.load.spritesheet(AssetType.Ship, "/images/player.png", {
+            frameWidth: 64,
+            frameHeight: 128,
+        });
         this.load.spritesheet(AssetType.Kaboom, "/images/explode.png", {
             frameWidth: 128,
             frameHeight: 128,
@@ -104,6 +108,7 @@ export class MainScene extends Phaser.Scene {
     private _shipKeyboardHandler() {
         let playerBody = this.player.body as Phaser.Physics.Arcade.Body;
         playerBody.setVelocity(0, 0);
+        
         if (this.cursors.left.isDown) {
             playerBody.setVelocityX(-200);
         } else if (this.cursors.right.isDown) {
@@ -111,7 +116,12 @@ export class MainScene extends Phaser.Scene {
         }
 
         if (this.fireKey.isDown) {
+            // Show firing/thrust animation when shooting
+            this.player.play(AnimationType.ShipThrust, true);
             this._fireBullet();
+        } else {
+            // Show idle animation when not shooting
+            this.player.play(AnimationType.ShipIdle, true);
         }
     }
 
