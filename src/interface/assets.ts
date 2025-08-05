@@ -5,6 +5,7 @@ export enum AssetType {
     Ship = "ship",
     Kaboom = "kaboom",
     Starfield = "starfield",
+    Lives = "lives",
 }
 
 export enum SoundType {

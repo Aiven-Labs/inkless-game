@@ -20,6 +20,7 @@ export class MainScene extends Phaser.Scene {
     scoreManager: ScoreManager;
     bulletTime = 0;
     firingTimer = 0;
+    nextBillIncrease = 0; // Timer for bill increases
     starfield: Phaser.GameObjects.TileSprite;
     player: Phaser.Physics.Arcade.Sprite;
     alienManager: AlienManager;
@@ -41,11 +42,15 @@ export class MainScene extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 32,
         });
-        this.load.image(AssetType.Ship, "/images/player.png");
+        this.load.spritesheet(AssetType.Ship, "/images/player.png", {
+            frameWidth: 64,
+            frameHeight: 128,
+        });
         this.load.spritesheet(AssetType.Kaboom, "/images/explode.png", {
             frameWidth: 128,
             frameHeight: 128,
         });
+        this.load.image(AssetType.Lives, "/images/lives.png");
 
         this.sound.volume = 0.5;
         this.load.audio(SoundType.Shoot, "/audio/shoot.wav");
@@ -65,8 +70,12 @@ export class MainScene extends Phaser.Scene {
             Phaser.Input.Keyboard.KeyCodes.SPACE
         );
         this.player = Ship.create(this);
+        this.player.play(AnimationType.ShipIdle); // Start with idle animation
         this.alienManager = new AlienManager(this);
         this.scoreManager = new ScoreManager(this);
+
+        // Initialize bill increase timer
+        this.nextBillIncrease = this.time.now + 1000; // First increase after 1 second
 
         this.fireKey.on("down", () => {
             switch (this.state) {
@@ -81,6 +90,13 @@ export class MainScene extends Phaser.Scene {
     update() {
         this.starfield.tilePositionY -= 1;
         this._shipKeyboardHandler();
+        
+        // Bill increases over time
+        if (this.time.now > this.nextBillIncrease && this.state === GameState.Playing) {
+            this.scoreManager.increaseBill(10); // Bill goes up by $10 every second
+            this.nextBillIncrease = this.time.now + 1000;
+        }
+        
         if (this.time.now > this.firingTimer) {
             this._enemyFires();
         }
@@ -104,6 +120,7 @@ export class MainScene extends Phaser.Scene {
     private _shipKeyboardHandler() {
         let playerBody = this.player.body as Phaser.Physics.Arcade.Body;
         playerBody.setVelocity(0, 0);
+        
         if (this.cursors.left.isDown) {
             playerBody.setVelocityX(-200);
         } else if (this.cursors.right.isDown) {
@@ -111,7 +128,12 @@ export class MainScene extends Phaser.Scene {
         }
 
         if (this.fireKey.isDown) {
+            // Show firing/thrust animation when shooting
+            this.player.play(AnimationType.ShipThrust, true);
             this._fireBullet();
+        } else {
+            // Show idle animation when not shooting
+            this.player.play(AnimationType.ShipIdle, true);
         }
     }
 
@@ -119,9 +141,13 @@ export class MainScene extends Phaser.Scene {
         let explosion: Kaboom = this.assetManager.explosions.get();
         bullet.kill();
         alien.kill(explosion);
-        this.scoreManager.increaseScore();
+        
+        // Save money by shooting aliens
+        this.scoreManager.saveFromBill(25); // Save $25 per alien
+        
         if (!this.alienManager.hasAliveAliens) {
-            this.scoreManager.increaseScore(1000);
+            // Bonus for clearing the level
+            this.scoreManager.saveFromBill(200); // Save $200 bonus
             this.scoreManager.setWinText();
             this.state = GameState.Win;
         }
@@ -138,6 +164,7 @@ export class MainScene extends Phaser.Scene {
         explosion.setPosition(this.player.x, this.player.y);
         explosion.play(AnimationType.Kaboom);
         this.sound.play(SoundType.Kaboom)
+        
         if (this.scoreManager.noMoreLives) {
             this.scoreManager.setGameOverText();
             this.assetManager.gameOver();
@@ -169,6 +196,12 @@ export class MainScene extends Phaser.Scene {
             if (bullet) {
                 bullet.shoot(this.player.x, this.player.y - 18);
                 this.bulletTime = this.time.now + 200;
+                
+                // Brief laser flash effect
+                this.player.setTint(0xffffff);
+                this.time.delayedCall(50, () => {
+                    this.player.clearTint();
+                });
             }
         }
     }
@@ -178,7 +211,11 @@ export class MainScene extends Phaser.Scene {
         this.player.enableBody(true, this.player.x, this.player.y, true, true);
         this.scoreManager.resetLives();
         this.scoreManager.hideText();
+        this.scoreManager.resetGame(); // Reset bill and savings
         this.alienManager.reset();
         this.assetManager.reset();
+        
+        // Reset bill increase timer
+        this.nextBillIncrease = this.time.now + 1000;
     }
 }
