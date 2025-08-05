@@ -1,5 +1,7 @@
 # Inkless Game
 
+[Play Now](https://aiven-labs.github.io/inkless-game/)
+
 brew install npm
 brew install rollup
 
