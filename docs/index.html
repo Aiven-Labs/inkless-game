@@ -1,50 +1,78 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Inkless Game</title>
-  <!-- Primary Meta Tags -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="title" content="Inkless Game">
-  <meta name="description" content="Inkless Kafka Powered and Inspired Space Invaders game">
-
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://aiven-labs.github.io/inkless-game/">
-  <meta property="og:title" content="Inkless Game">
-  <meta property="og:description" content="Inkless Kafka Powered and Inspired Space Invaders game">
-  <meta property="og:image" content="assets/readme/invaders-cover.png">
-
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://aiven-labs.github.io/inkless-game/">
-  <meta property="twitter:title" content="Inkless Game">
-  <meta property="twitter:description" content="Inkless Kafka Powered and Inspired Space Invaders game">
-  <meta property="twitter:image" content="assets/readme/invaders-cover.png">
-
-  <link rel="image_src" href="assets/favicon.png" type="image/png">
-  <link rel="shortcut icon" href="assets/favicon.png" type="image/png">
-  <link rel="icon" href="assets/favicon.png" type="image/png">
-
-  <link rel="stylesheet"
-        href="/assets/css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders - Bill Fighter</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid #333;
+            cursor: pointer;
+        }
+        .game-info {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            font-size: 12px;
+        }
+        .start-prompt {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #888;
+            font-size: 10px;
+            text-align: center;
+        }
+    </style>
 </head>
-
 <body>
-  <div class="container">
-    <div id="SpaceInvaders">      
-      <div class="pacman">
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
+    <div class="game-info">
+        <p>Fight your bills by shooting space invaders!</p>
+        <p>Use arrow keys to move, spacebar to shoot.</p>
     </div>
-  </div>
-
-  <script src="game.js"></script>
+    <div class="start-prompt">
+        <p>Click anywhere to start audio</p>
+    </div>
+    
+    <!-- Game Configuration -->
+    <script>
+        // Configuration for the game - can be overridden by environment
+        window.gameConfig = {
+            apiUrl: 'http://localhost:8000',  // High score API URL
+            fallbackUrl: 'https://your-website.com',  // Fallback when API unavailable
+            development: true  // Development mode
+        };
+        
+        // Override with environment variables if available
+        if (typeof process !== 'undefined' && process.env) {
+            if (process.env.GAME_API_URL) {
+                window.gameConfig.apiUrl = process.env.GAME_API_URL;
+            }
+            if (process.env.GAME_FALLBACK_URL) {
+                window.gameConfig.fallbackUrl = process.env.GAME_FALLBACK_URL;
+            }
+            if (process.env.NODE_ENV) {
+                window.gameConfig.development = process.env.NODE_ENV !== 'production';
+            }
+        }
+        
+        console.log('Game starting with config:', window.gameConfig);
+    </script>
+    
+    <script src="game.js"></script>
 </body>
-
 </html>
