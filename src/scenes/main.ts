@@ -34,28 +34,28 @@ export class MainScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.setBaseURL("assets");  // Remove leading slash
-        this.load.image(AssetType.Starfield, "images/starfield.png");  // Remove leading slash
-        this.load.image(AssetType.Bullet, "images/bullet.png");
-        this.load.image(AssetType.EnemyBullet, "images/enemy-bullet.png");
-        this.load.spritesheet(AssetType.Alien, "images/invader.png", {
+        // Remove setBaseURL completely to avoid any path concatenation issues
+        this.load.image(AssetType.Starfield, "assets/images/starfield.png");
+        this.load.image(AssetType.Bullet, "assets/images/bullet.png");
+        this.load.image(AssetType.EnemyBullet, "assets/images/enemy-bullet.png");
+        this.load.spritesheet(AssetType.Alien, "assets/images/invader.png", {
             frameWidth: 32,
             frameHeight: 32,
         });
-        this.load.spritesheet(AssetType.Ship, "images/player.png", {
+        this.load.spritesheet(AssetType.Ship, "assets/images/player.png", {
             frameWidth: 64,
             frameHeight: 128,
         });
-        this.load.spritesheet(AssetType.Kaboom, "images/explode.png", {
+        this.load.spritesheet(AssetType.Kaboom, "assets/images/explode.png", {
             frameWidth: 128,
             frameHeight: 128,
         });
-        this.load.image(AssetType.Lives, "images/lives.png");
+        this.load.image(AssetType.Lives, "assets/images/lives.png");
 
         this.sound.volume = 0.5;
-        this.load.audio(SoundType.Shoot, "audio/shoot.wav");
-        this.load.audio(SoundType.Kaboom, "audio/explosion.wav");
-        this.load.audio(SoundType.InvaderKilled, "audio/invaderkilled.wav");
+        this.load.audio(SoundType.Shoot, "assets/audio/shoot.wav");
+        this.load.audio(SoundType.Kaboom, "assets/audio/explosion.wav");
+        this.load.audio(SoundType.InvaderKilled, "assets/audio/invaderkilled.wav");
     }
 
     create() {
