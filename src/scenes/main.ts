@@ -307,24 +307,27 @@ export class MainScene extends Phaser.Scene {
     }
 
     private async _enemyBulletHitPlayer(ship, enemyBullet: EnemyBullet) {
-        let explosion: Kaboom = this.assetManager.explosions.get();
-        enemyBullet.kill();
-        let live: Phaser.GameObjects.Sprite = this.scoreManager.lives.getFirstAlive();
-        if (live) {
-            live.setActive(false).setVisible(false);
-        }
-
-        explosion.setPosition(this.player.x, this.player.y);
-        explosion.play(AnimationType.Kaboom);
-        this.sound.play(SoundType.Kaboom);
-        
-        if (this.scoreManager.noMoreLives) {
-            await this.scoreManager.setGameOverText(); // This uploads the high score
-            this.assetManager.gameOver();
-            this.state = GameState.GameOver;
-            this.player.disableBody(true, true);
-        }
+    let explosion: Kaboom = this.assetManager.explosions.get();
+    enemyBullet.kill();
+    let live: Phaser.GameObjects.Sprite = this.scoreManager.lives.getFirstAlive();
+    if (live) {
+        live.setActive(false).setVisible(false);
     }
+
+    explosion.setPosition(this.player.x, this.player.y);
+    explosion.play(AnimationType.Kaboom);
+    this.sound.play(SoundType.Kaboom);
+    
+    if (this.scoreManager.noMoreLives) {
+        // Clear all aliens on game over
+        this.alienManager.killAll();
+        
+        await this.scoreManager.setGameOverText(); // This uploads the high score
+        this.assetManager.gameOver();
+        this.state = GameState.GameOver;
+        this.player.disableBody(true, true);
+    }
+}
 
     private _enemyFires() {
         if (!this.player.active) {

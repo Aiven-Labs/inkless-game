@@ -29,41 +29,41 @@ export class ScoreManager {
   }
 
   private _createText() {
-    this.billText = this._scene.add.text(20, 20, `Bill: $${this.formatMoney(this.currentBill)}`, {
-      fontSize: '18px',
-      fill: '#FF6B6B'
-    });
+  this.billText = this._scene.add.text(20, 20, `Bill: $${this.formatMoney(this.currentBill)}`, {
+    fontSize: '18px',
+    fill: '#FF6B6B'
+  }).setDepth(1000); // High depth so it's always on top
 
-    this.savingsText = this._scene.add.text(20, 45, `Saved: $${this.formatMoney(this.totalSavings)}`, {
-      fontSize: '18px',
-      fill: '#4ECDC4'
-    });
+  this.savingsText = this._scene.add.text(20, 45, `Saved: $${this.formatMoney(this.totalSavings)}`, {
+    fontSize: '18px',
+    fill: '#4ECDC4'
+  }).setDepth(1000); // High depth so it's always on top
 
-    this.line1Text = this._scene.add.text(400, 200, "", {
-      fontSize: "32px",
-      fill: "#ffffff"
-    }).setOrigin(0.5);
+  this.line1Text = this._scene.add.text(400, 200, "", {
+    fontSize: "32px",
+    fill: "#ffffff"
+  }).setOrigin(0.5).setDepth(1000); // High depth so it's always on top
 
-    this.line2Text = this._scene.add.text(400, 240, "", {
-      fontSize: "18px",
-      fill: "#ffffff"
-    }).setOrigin(0.5);
+  this.line2Text = this._scene.add.text(400, 240, "", {
+    fontSize: "18px",
+    fill: "#ffffff"
+  }).setOrigin(0.5).setDepth(1000); // High depth so it's always on top
 
-    this.line3Text = this._scene.add.text(400, 270, "", {
-      fontSize: "18px",
-      fill: "#ffffff"
-    }).setOrigin(0.5);
+  this.line3Text = this._scene.add.text(400, 270, "", {
+    fontSize: "18px",
+    fill: "#ffffff"
+  }).setOrigin(0.5).setDepth(1000); // High depth so it's always on top
 
-    this.line4Text = this._scene.add.text(400, 300, "", {
-      fontSize: "16px",
-      fill: "#ffffff"
-    }).setOrigin(0.5);
+  this.line4Text = this._scene.add.text(400, 300, "", {
+    fontSize: "16px",
+    fill: "#ffffff"
+  }).setOrigin(0.5).setDepth(1000); // High depth so it's always on top
 
-    this.line5Text = this._scene.add.text(400, 330, "", {
-      fontSize: "14px",
-      fill: "#ffffff"
-    }).setOrigin(0.5);
-  }
+  this.line5Text = this._scene.add.text(400, 330, "", {
+    fontSize: "14px",
+    fill: "#ffffff"
+  }).setOrigin(0.5).setDepth(1000); // High depth so it's always on top
+}
 
   private _createLives() {
     this.lives = this._scene.physics.add.group({
