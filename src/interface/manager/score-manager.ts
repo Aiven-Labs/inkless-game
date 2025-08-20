@@ -1,5 +1,6 @@
 import { AssetType } from "../assets";
 import { HighScoreManager } from "./highscore-manager";
+import { AnimationType } from "../factory/animation-factory";
 
 export class ScoreManager {
   billText: Phaser.GameObjects.Text;
@@ -65,19 +66,25 @@ export class ScoreManager {
   }).setOrigin(0.5).setDepth(1000); // High depth so it's always on top
 }
 
-  private _createLives() {
-    this.lives = this._scene.physics.add.group({
-      maxSize: 3,
-      runChildUpdate: true
-    });
+private _createLives() {
+  this.lives = this._scene.physics.add.group({
+    maxSize: 3,
+    runChildUpdate: true
+  });
 
-    for (let i = 0; i < 3; i++) {
-      let live: Phaser.Physics.Arcade.Sprite = this.lives.create(750 - (i * 30), 20, AssetType.Ship);
-      live.setScale(0.5);
-      live.setActive(true);
-      live.setVisible(true);
-    }
+  for (let i = 0; i < 3; i++) {
+    // Use Ship sprite and play the same idle animation as the player
+    let live: Phaser.Physics.Arcade.Sprite = this.lives.create(750 - (i * 35), 50, AssetType.Ship);
+    
+    // Make lives smaller (30% of normal size)
+    live.setScale(0.3);
+    live.setActive(true);
+    live.setVisible(true);
+    
+    // Play the same idle animation as the player ship
+    live.play(AnimationType.ShipIdle);
   }
+}
 
   saveFromBill(amount: number) {
     this.currentBill = Math.max(0, this.currentBill - amount);
@@ -262,13 +269,18 @@ hideText() {
     this.updateDisplay();
   }
 
-  // ADDED: Method to reset lives
-  resetLives() {
-    this.lives.children.entries.forEach((live: any) => {
-      live.setActive(true);
-      live.setVisible(true);
-    });
-  }
+resetLives() {
+  // Clear existing lives
+  this.lives.children.entries.forEach((live: any) => {
+    live.setActive(false);
+    live.setVisible(false);
+    live.destroy();
+  });
+  this.lives.clear();
+  
+  // Recreate lives with animations
+  this._createLives();
+}
 
   // Legacy methods for compatibility
   _setBigText(line1: string, line2: string, line3: string) {

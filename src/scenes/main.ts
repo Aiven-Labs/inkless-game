@@ -210,11 +210,14 @@ export class MainScene extends Phaser.Scene {
         `);
     }
 
-    private resetPlayer(): void {
-        this.player.setPosition(400, 550);
-        this.player.setActive(true).setVisible(true);
-        this.player.body.enable = true;
-    }
+private resetPlayer(): void {
+  this.player.setPosition(400, 550);
+  this.player.setActive(true).setVisible(true);
+  this.player.body.enable = true;
+  
+  // Make sure scale is correct after reset
+  this.player.setScale(0.7);
+}
 
     private showLevelIntro(level: number): void {
         // Show level number briefly
@@ -342,7 +345,7 @@ export class MainScene extends Phaser.Scene {
         }
     }
 
-    private _fireBullet() {
+private _fireBullet() {
         if (!this.player.active) {
             return;
         }
@@ -351,7 +354,8 @@ export class MainScene extends Phaser.Scene {
             let bullet: Bullet = this.assetManager.bullets.get();
             if (bullet) {
                 bullet.shoot(this.player.x, this.player.y - 18);
-                this.bulletTime = this.time.now + 200;
+                // Increased from 200ms to 400ms (half the fire rate)
+                this.bulletTime = this.time.now + 400;
                 
                 // Brief laser flash effect
                 this.player.setTint(0xffffff);
