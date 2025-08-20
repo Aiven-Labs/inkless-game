@@ -5,19 +5,29 @@
     // Load configuration from environment variables or defaults
     const gameConfig = {
         // API URL for the high score backend
-        apiUrl: process.env.GAME_API_URL || 'http://localhost:8000',
+        apiUrl: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:8000'
+            : 'https://your-production-api-domain.com',
         
         // Fallback URL when API is unavailable
-        fallbackUrl: process.env.GAME_FALLBACK_URL || 'https://your-website.com',
+        fallbackUrl: 'https://your-website.com',
         
-        // Development mode flag
-        development: process.env.NODE_ENV !== 'production'
+        // Environment mode
+        development: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
+        
+        // Game settings
+        initialBill: 2500,
+        baseAlienSpeed: 50,
+        baseBulletFrequency: 2500,
+        
+        // Difficulty scaling per level
+        speedIncrease: 0.25,
+        bulletFrequencyDecrease: 200,
+        bulletSpeedIncrease: 15
     };
 
-    // Make config available globally
-    if (typeof window !== 'undefined') {
-        window.gameConfig = gameConfig;
-    }
-
-    console.log('Game configuration loaded:', gameConfig);
+    // Make config globally available
+    window.gameConfig = gameConfig;
+    
+    console.log('Game starting with config:', gameConfig);
 })();

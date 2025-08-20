@@ -6,6 +6,10 @@ export enum AssetType {
     Kaboom = "kaboom",
     Starfield = "starfield",
     Lives = "lives",
+    // Required alien types for patterns
+    AlienYellow = "alien_yellow",
+    AlienBlue = "alien_blue", 
+    AlienPurple = "alien_purple",
 }
 
 export enum SoundType {

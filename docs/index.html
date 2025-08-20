@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders - Bill Fighter</title>
+    <title>Inkless Game - Space Invaders</title>
     <style>
         body {
             margin: 0;
@@ -15,64 +15,44 @@
             min-height: 100vh;
             font-family: Arial, sans-serif;
         }
-        canvas {
-            border: 1px solid #333;
-            cursor: pointer;
-        }
-        .game-info {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
+        
+        #game-container {
             text-align: center;
-            font-size: 12px;
         }
-        .start-prompt {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #888;
-            font-size: 10px;
-            text-align: center;
+        
+        #game-title {
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        #game-canvas {
+            border: 2px solid #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+        
+        #game-info {
+            color: #fff;
+            margin-top: 20px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="game-info">
-        <p>Fight your bills by shooting space invaders!</p>
-        <p>Use arrow keys to move, spacebar to shoot.</p>
+    <div id="game-container">
+        <h1 id="game-title">Inkless Game - Fight Your Bills!</h1>
+        <div id="game-canvas"></div>
+        <div id="game-info">
+            <p>Shoot aliens to reduce your bills and save money!</p>
+            <p>Complete levels to continue your savings journey.</p>
+        </div>
     </div>
-    <div class="start-prompt">
-        <p>Click anywhere to start audio</p>
-    </div>
+
+    <!-- Load game configuration first -->
+    <script src="../src/game.config.js"></script>
     
-    <!-- Game Configuration -->
-    <script>
-        // Configuration for the game - can be overridden by environment
-        window.gameConfig = {
-            apiUrl: 'http://localhost:8000',  // High score API URL
-            fallbackUrl: 'https://your-website.com',  // Fallback when API unavailable
-            development: true  // Development mode
-        };
-        
-        // Override with environment variables if available
-        if (typeof process !== 'undefined' && process.env) {
-            if (process.env.GAME_API_URL) {
-                window.gameConfig.apiUrl = process.env.GAME_API_URL;
-            }
-            if (process.env.GAME_FALLBACK_URL) {
-                window.gameConfig.fallbackUrl = process.env.GAME_FALLBACK_URL;
-            }
-            if (process.env.NODE_ENV) {
-                window.gameConfig.development = process.env.NODE_ENV !== 'production';
-            }
-        }
-        
-        console.log('Game starting with config:', window.gameConfig);
-    </script>
-    
+    <!-- Load your compiled game bundle -->
     <script src="game.js"></script>
 </body>
 </html>

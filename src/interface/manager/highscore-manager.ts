@@ -1,16 +1,7 @@
-// src/interface/manager/highscore-manager.ts
-import { Environment } from "../config/environment";
-
 export class HighScoreManager {
-    private apiUrl: string;
-    private fallbackUrl: string;
-    private environment: Environment;
+    private apiUrl: string = 'http://localhost:8000';
 
     constructor() {
-        this.environment = Environment.getInstance();
-        this.apiUrl = this.environment.getApiUrl();
-        this.fallbackUrl = this.environment.getFallbackUrl();
-        
         console.log(`HighScoreManager initialized with API: ${this.apiUrl}`);
     }
 
@@ -20,95 +11,97 @@ export class HighScoreManager {
                Math.random().toString(36).substring(2, 15);
     }
 
-    // Submit score - returns session ID for claiming
-    async submitScore(finalBill: number, totalSavings: number): Promise<string | null> {
-        try {
-            const sessionId = this.generateSessionId();
-            
-            console.log(`Submitting score to ${this.apiUrl}/api/scores`);
-            console.log(`Score data: Bill=${finalBill}, Savings=${totalSavings}`);
-            
-            const response = await fetch(`${this.apiUrl}/api/scores`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    session_id: sessionId,
-                    final_bill: finalBill,
-                    total_savings: totalSavings,
-                    timestamp: new Date().toISOString()
-                })
-            });
+    async submitScore(finalBill: number, totalSavings: number): Promise<any> {
+    const sessionId = this.generateSessionId();
+    const timestamp = new Date().toISOString();
 
-            console.log(`Response status: ${response.status}`);
+    try {
+        console.log('Submitting score:', { sessionId, finalBill, totalSavings });
 
-            if (response.ok) {
-                const result = await response.json();
-                console.log('Score submitted successfully:', result);
-                return sessionId;
-            } else {
-                const errorData = await response.json();
-                console.error('Failed to submit score:', errorData);
-                return null;
-            }
-        } catch (error) {
-            console.error('Error submitting score:', error);
-            return null;
+        const response = await fetch(`${this.apiUrl}/api/scores`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                session_id: sessionId,
+                final_bill: finalBill,
+                total_savings: totalSavings,
+                timestamp: timestamp
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    }
 
-    // Generate claim URL
-    getClaimUrl(sessionId: string): string {
-        return `${this.apiUrl}/claim/${sessionId}`;
-    }
+        const result = await response.json();
+        console.log('Score submission result:', result);
 
-    // Generate fallback URL for when API is unavailable
-    getFallbackClaimUrl(): string {
-        return `${this.fallbackUrl}/manual-score-submit`;
-    }
-
-    // Generate QR code data URL using free QR API
-    generateQRCode(sessionId: string): string {
-        const claimUrl = this.getClaimUrl(sessionId);
-        console.log(`Generating QR code for: ${claimUrl}`);
-        return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(claimUrl)}`;
-    }
-
-    // Generate fallback QR code
-    generateFallbackQRCode(): string {
-        const fallbackUrl = this.getFallbackClaimUrl();
-        console.log(`Generating fallback QR code for: ${fallbackUrl}`);
-        return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(fallbackUrl)}`;
-    }
-
-    // Check if score is a high score (optional - for immediate feedback)
-    async checkHighScore(sessionId: string): Promise<{isHighScore: boolean, rank?: number} | null> {
-        try {
-            console.log(`Checking high score for session: ${sessionId}`);
-            const response = await fetch(`${this.apiUrl}/api/check-high-score/${sessionId}`);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('High score check result:', data);
-                return {
-                    isHighScore: data.is_high_score,
-                    rank: data.rank
-                };
-            } else {
-                console.warn('High score check failed:', response.status);
+        if (result.success) {
+            // Try to get leaderboard, but handle errors gracefully
+            let isHighScore = false;
+            let playerRank = null;
+            
+            try {
+                const leaderboardResponse = await fetch(`${this.apiUrl}/api/leaderboard`);
+                if (leaderboardResponse.ok) {
+                    const leaderboard = await leaderboardResponse.json();
+                    
+                    // Check if leaderboard is an array
+                    if (Array.isArray(leaderboard) && leaderboard.length > 0) {
+                        const topTenPercent = Math.ceil(leaderboard.length * 0.1);
+                        const playerRankIndex = leaderboard.findIndex(entry => 
+                            entry.total_savings === totalSavings && 
+                            entry.final_bill === finalBill
+                        );
+                        
+                        if (playerRankIndex >= 0) {
+                            playerRank = playerRankIndex + 1;
+                            isHighScore = playerRank <= topTenPercent;
+                        }
+                    }
+                }
+            } catch (leaderboardError) {
+                console.warn('Could not fetch leaderboard:', leaderboardError);
+                // Continue without high score detection
             }
-        } catch (error) {
-            console.error('Error checking high score:', error);
-        }
-        return null;
-    }
 
-    // Get current configuration (useful for debugging)
-    getConfig() {
+            return {
+                success: true,
+                sessionId: sessionId,
+                claimUrl: `${this.apiUrl}/claim/${sessionId}`,
+                qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`${this.apiUrl}/claim/${sessionId}`)}`,
+                isHighScore: isHighScore,
+                rank: playerRank
+            };
+        } else {
+            return {
+                success: false,
+                error: result.detail || 'Unknown error'
+            };
+        }
+
+    } catch (error) {
+        console.error('Error submitting score:', error);
         return {
-            apiUrl: this.apiUrl,
-            fallbackUrl: this.fallbackUrl,
-            isDevelopment: this.environment.isDev()
+            success: false,
+            error: error.message || 'Network error'
         };
+    }
+}
+
+    // Get current leaderboard
+    async getLeaderboard(): Promise<any> {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/leaderboard`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching leaderboard:', error);
+            return [];
+        }
     }
 }
