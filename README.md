@@ -68,7 +68,6 @@ The score server is a Python FastAPI application that handles high scores and le
 ### Prerequisites
 
 - PostgreSQL database
-- Container hosting service (Aiven, Railway, Render, etc.)
 
 ### Environment Variables
 
@@ -85,28 +84,6 @@ The score server requires these environment variables:
 - `CORS_ORIGINS`: Allowed domains for CORS (default: `*`)
 - `LOG_LEVEL`: Logging level (default: `INFO`)
 - `PORT`: Server port (default: `8000`)
-
-### Database Setup
-
-Create a PostgreSQL database with this schema:
-
-```sql
-CREATE TABLE scores (
-    session_id VARCHAR(255) PRIMARY KEY,
-    final_bill INTEGER NOT NULL,
-    total_savings INTEGER NOT NULL,
-    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    email VARCHAR(255),
-    nickname VARCHAR(50),
-    claimed_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_scores_total_savings ON scores(total_savings DESC);
-CREATE INDEX idx_scores_timestamp ON scores(timestamp DESC);
-CREATE UNIQUE INDEX idx_scores_nickname_unique ON scores(LOWER(nickname)) WHERE nickname IS NOT NULL;
-```
 
 ### Aiven Deployment
 
@@ -131,10 +108,6 @@ CREATE UNIQUE INDEX idx_scores_nickname_unique ON scores(LOWER(nickname)) WHERE 
    - `LOG_LEVEL`: `INFO`
 
 4. **Deploy**: Click deploy and wait for build completion
-
-### Other Container Platforms
-
-The score server can also be deployed to other platforms, but this guide focuses on Aiven configuration.
 
 ### Local Development
 
