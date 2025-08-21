@@ -1,4 +1,4 @@
-# Dockerfile for Aiven deployment (root directory)
+# Optimized Dockerfile for Aiven deployment (root directory)
 # This builds the score server from the score_server subdirectory
 
 FROM python:3.11-slim as builder
@@ -22,24 +22,26 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install runtime dependencies
+# Install runtime dependencies only
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python packages from builder stage
-COPY --from=builder /root/.local /root/.local
+# Create non-root user first (before copying Python packages)
+RUN useradd --create-home --shell /bin/bash --uid 1000 appuser \
+    && mkdir -p /app/logs
 
-# Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+# Copy Python packages from builder stage
+COPY --from=builder /root/.local /home/appuser/.local
+
+# Set PATH to include user local bin (fixes PATH warnings)
+ENV PATH=/home/appuser/.local/bin:$PATH
 
 # Copy application code from score_server directory
 COPY score_server/app/ ./app/
 
-# Create non-root user for security
-RUN useradd --create-home --shell /bin/bash --uid 1000 appuser \
-    && mkdir -p /app/logs \
-    && chown -R appuser:appuser /app
+# Set ownership after copying everything
+RUN chown -R appuser:appuser /app /home/appuser/.local
 
 # Switch to non-root user
 USER appuser
@@ -52,9 +54,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Expose port
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+# Remove HEALTHCHECK (not supported in OCI format used by Aiven)
+# Health check will be handled by Aiven's platform
 
 # Run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
