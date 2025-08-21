@@ -110,11 +110,11 @@ export class AlienManager {
   }
 
   private getMovementForLevel(level: number): MovementPattern {
-    if (level <= 3) return MovementPattern.HORIZONTAL;
-    if (level <= 5) return MovementPattern.VERTICAL_SWEEP;
-    if (level <= 7) return MovementPattern.DIAGONAL_SWEEP;
-    if (level <= 9) return MovementPattern.BACK_AND_FORTH;
-    return MovementPattern.SLOW_DESCENT;
+    if (level <= 5) return MovementPattern.HORIZONTAL; // Keep simple longer
+    if (level <= 8) return MovementPattern.VERTICAL_SWEEP; // Gentler movement
+    if (level <= 11) return MovementPattern.BACK_AND_FORTH; // Even more gradual
+    if (level <= 14) return MovementPattern.DIAGONAL_SWEEP; // Push diagonal back further
+    return MovementPattern.SLOW_DESCENT; // Reserved for very high levels
   }
 
   // Formation patterns - all simplified and starting higher up
@@ -386,11 +386,11 @@ export class AlienManager {
     this.aliens.children.entries.forEach((alien: any) => {
       if (!alien.active) return;
       
-      // Move horizontally like normal
-      alien.x += this.moveSpeed * this.direction * (1/60);
+      // Move horizontally like normal but slower
+      alien.x += this.moveSpeed * this.direction * 0.8 * (1/60); // Slightly slower
       
-      // Add slow vertical movement
-      alien.y += this.verticalSpeed * (1/60);
+      // Add very slow vertical movement
+      alien.y += this.verticalSpeed * 0.7 * (1/60); // Slower descent
     });
     
     // Check horizontal boundaries and reverse direction
@@ -408,8 +408,8 @@ export class AlienManager {
   }
 
   private updateDiagonalMovement(): void {
-    // Change direction every 3 seconds
-    if (this.movementTimer > 3000) {
+    // Change direction every 4 seconds (was 3)
+    if (this.movementTimer > 4000) {
       this.direction *= -1;
       this.movementTimer = 0;
     }
@@ -417,9 +417,9 @@ export class AlienManager {
     this.aliens.children.entries.forEach((alien: any) => {
       if (!alien.active) return;
       
-      // Move diagonally - horizontal and vertical at same time
-      alien.x += this.moveSpeed * this.direction * 0.7 * (1/60); // Slower horizontal
-      alien.y += this.moveSpeed * 0.3 * (1/60); // Slower vertical
+      // Move diagonally - much slower than before
+      alien.x += this.moveSpeed * this.direction * 0.4 * (1/60); // Was 0.7, now 0.4
+      alien.y += this.moveSpeed * 0.15 * (1/60); // Was 0.3, now 0.15
       
       // Wrap around horizontally if needed
       if (alien.x < 0) alien.x = 800;

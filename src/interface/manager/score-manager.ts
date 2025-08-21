@@ -146,11 +146,14 @@ private _createLives() {
   }
   
   private async _setGameOverWithScore() {
+    // Clear any existing QR codes and text first
+    this.clearQRCode();
+    
     this.line1Text.setText("GAME OVER");
     this.line2Text.setText(`Final Bill: $${this.formatMoney(this.currentBill)}`);
     this.line3Text.setText(`You Saved: $${this.formatMoney(this.totalSavings)}`);
     this.line4Text.setText("Submitting score...");
-    this.line5Text.setText("");
+    this.line5Text.setText("Please wait...");
 
     try {
       const result = await this.highScoreManager.submitScore(
@@ -159,15 +162,21 @@ private _createLives() {
       );
 
       if (result.success) {
+        // Store the claim info but don't display URL text until QR is ready
+        const claimUrl = result.claimUrl;
+        const sessionId = result.sessionId;
+        
         if (result.isHighScore) {
           this.line4Text.setText(`HIGH SCORE! Rank #${result.rank}!`);
           this.line4Text.setFill("#FFD700");
+          this.line5Text.setText("Scan QR code to claim your score!");
         } else {
           this.line4Text.setText("Scan QR code to claim your score!");
+          this.line5Text.setText("Loading QR code...");
         }
-        this.line5Text.setText(result.claimUrl);
         
-        this._loadQRCode(result.qrCodeUrl);
+        // Load QR code with session ID for unique tracking
+        this._loadQRCodeWithSession(result.qrCodeUrl, sessionId, claimUrl);
       } else {
         this.line4Text.setText("Score submission failed");
         this.line5Text.setText("Please try again later");
@@ -181,47 +190,176 @@ private _createLives() {
     this.updateBestBill();
   }
 
-  private _loadQRCode(qrUrl: string) {
-    console.log('Loading QR code:', qrUrl);
+  private _loadQRCodeWithSession(qrUrl: string, sessionId: string, claimUrl: string) {
+    console.log('Loading QR code for session:', sessionId);
+    
+    // Use session ID in texture key for uniqueness
+    const textureKey = `qr-code-${sessionId}`;
+    
+    // Clean up any existing QR code first
+    this.clearQRCode();
     
     const img = new Image();
     img.crossOrigin = "anonymous";
     
     img.onload = () => {
       try {
+        // Create a fresh canvas
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          console.error('Could not get canvas context');
+          this.line5Text.setText("QR code failed to load");
+          return;
+        }
         
         canvas.width = 120;
         canvas.height = 120;
         
+        // Draw image to our canvas
         ctx.drawImage(img, 0, 0, 120, 120);
         
-        const texture = this._scene.textures.createCanvas('qr-code', canvas.width, canvas.height);
-        const canvasTexture = texture.getCanvas();
-        const canvasCtx = canvasTexture.getContext('2d');
-        canvasCtx.drawImage(canvas, 0, 0);
-        texture.refresh();
+        // Use addCanvas with session-specific key
+        this._scene.textures.addCanvas(textureKey, canvas);
         
-        if (this._scene.children.getByName('qr-display')) {
-          this._scene.children.getByName('qr-display').destroy();
+        // Remove any existing QR display
+        const existingQR = this._scene.children.getByName('qr-display');
+        if (existingQR) {
+          existingQR.destroy();
         }
         
-        const qrDisplay = this._scene.add.image(400, 400, 'qr-code');
+        // Create the QR display
+        const qrDisplay = this._scene.add.image(400, 400, textureKey);
         qrDisplay.setName('qr-display');
         qrDisplay.setDisplaySize(120, 120);
+        qrDisplay.setDepth(1001);
         
-        console.log('QR code displayed successfully');
+        // Add session ID as data for tracking
+        qrDisplay.setData('sessionId', sessionId);
+        
+        // Now show the claim URL since QR is ready
+        this.line5Text.setText(`Claim: ${claimUrl}`);
+        
+        console.log(`QR code displayed successfully for session: ${sessionId}`);
+        
       } catch (error) {
         console.error('Error creating QR texture:', error);
+        this.line5Text.setText("QR code display failed");
       }
     };
     
-    img.onerror = () => {
-      console.error('Failed to load QR code image');
+    img.onerror = (error) => {
+      console.error('Failed to load QR code image:', error);
       this.line5Text.setText("QR code failed to load");
     };
     
+    // Set loading timeout
+    setTimeout(() => {
+      if (!img.complete) {
+        console.log('QR code loading timeout for session:', sessionId);
+        this.line5Text.setText("QR code loading timeout");
+      }
+    }, 5000);
+    
+    img.src = qrUrl;
+  }
+
+  // Enhanced clearQRCode method with session tracking
+  clearQRCode() {
+    // Remove QR display and log which session we're clearing
+    const qrDisplay = this._scene.children.getByName('qr-display');
+    if (qrDisplay) {
+      const sessionId = qrDisplay.getData('sessionId');
+      if (sessionId) {
+        console.log(`Clearing QR code for session: ${sessionId}`);
+      }
+      qrDisplay.destroy();
+    }
+    
+    // Clean up ALL QR textures
+    const textureManager = this._scene.textures;
+    const textureKeys = Object.keys(textureManager.list);
+    
+    textureKeys.forEach(key => {
+      if (key.startsWith('qr-code')) {
+        try {
+          textureManager.remove(key);
+          console.log(`Removed QR texture: ${key}`);
+        } catch (error) {
+          console.warn(`Could not remove texture ${key}:`, error);
+        }
+      }
+    });
+  }
+
+private _loadQRCode(qrUrl: string) {
+    console.log('Loading QR code:', qrUrl);
+    
+    // Generate unique texture key using timestamp to avoid conflicts
+    const textureKey = `qr-code-${Date.now()}`;
+    
+    // Clean up any existing QR code first
+    this.clearQRCode();
+    
+    // Remove any existing qr-code textures
+    if (this._scene.textures.exists('qr-code')) {
+      this._scene.textures.remove('qr-code');
+    }
+    if (this._scene.textures.exists(textureKey)) {
+      this._scene.textures.remove(textureKey);
+    }
+    
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    
+    img.onload = () => {
+      try {
+        // Create a fresh canvas
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          console.error('Could not get canvas context');
+          this.line5Text.setText("QR code failed to load");
+          return;
+        }
+        
+        canvas.width = 120;
+        canvas.height = 120;
+        
+        // Draw image to our canvas
+        ctx.drawImage(img, 0, 0, 120, 120);
+        
+        // Use addCanvas instead of createCanvas to avoid conflicts
+        this._scene.textures.addCanvas(textureKey, canvas);
+        
+        // Remove any existing QR display
+        const existingQR = this._scene.children.getByName('qr-display');
+        if (existingQR) {
+          existingQR.destroy();
+        }
+        
+        // Create the QR display with unique texture key
+        const qrDisplay = this._scene.add.image(400, 400, textureKey);
+        qrDisplay.setName('qr-display');
+        qrDisplay.setDisplaySize(120, 120);
+        qrDisplay.setDepth(1001); // Above other UI elements
+        
+        console.log('QR code displayed successfully with texture:', textureKey);
+        
+      } catch (error) {
+        console.error('Error creating QR texture:', error);
+        this.line5Text.setText("QR code display failed");
+      }
+    };
+    
+    img.onerror = (error) => {
+      console.error('Failed to load QR code image:', error);
+      this.line5Text.setText("QR code failed to load");
+    };
+    
+    // Set loading timeout
     setTimeout(() => {
       if (!img.complete) {
         console.log('QR code loading timeout');
@@ -240,18 +378,18 @@ private _createLives() {
   }
 
 // UPDATE the hideText method to also clear QR code:
-hideText() {
-  this.line1Text.setText("");
-  this.line2Text.setText("");
-  this.line3Text.setText("");
-  this.line4Text.setText("");
-  this.line5Text.setText("");
-  this.line4Text.setFill("#ffffff");
-  this.line5Text.setFill("#ffffff");
-  
-  // Also clear QR code when hiding text
-  this.clearQRCode();
-}
+  hideText() {
+    this.line1Text.setText("");
+    this.line2Text.setText("");
+    this.line3Text.setText("");
+    this.line4Text.setText("");
+    this.line5Text.setText("");
+    this.line4Text.setFill("#ffffff");
+    this.line5Text.setFill("#ffffff");
+    
+    // Enhanced QR code cleanup
+    this.clearQRCode();
+  }
 
   getCurrentLevel(): number {
     return this.currentLevel;
@@ -288,11 +426,5 @@ resetLives() {
     this.line2Text.setText(line2);
     this.line3Text.setText(line3);
   }
-clearQRCode() {
-  const qrDisplay = this._scene.children.getByName('qr-display');
-  if (qrDisplay) {
-    qrDisplay.destroy();
-  }
-}
 
 }
